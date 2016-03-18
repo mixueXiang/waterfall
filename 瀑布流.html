@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>固定列瀑布流</title>
+<style>
+	/* 2015.12.21 固定列瀑布流 */
+    body {margin:0;}
+	#ul1 {width:1080px; margin:20px auto;}
+	#ul1:after {content:'';height:0; visibility:hidden; clear:both; display:block;} /* 清除浮动元素带来的影响 */
+	li {width:247px; float:left; border:1px solid #ccc; margin-right:10px; list-style:none;}
+	li div{border:1px dotted #ccc; margin:10px;}
+	div img{display:block; width:225px;}
+	div p{text-align:center;}
+</style>
+</head>
+<body>
+	<ul id="ul1">
+		<li>
+			<!-- <div>
+				<img src="http://s17.mogucdn.com/p1/151129/1qbxq5_ie3tizjxmezwiojsguzdambqgayde_640x960.jpg_220x330.v1cDM.81.jpg" alt="" />
+				<p>秋冬款韩版半高领中长款宽松套头</p>
+			</div> -->
+		</li>
+		<li></li>
+		<li></li>
+		<li></li>
+	</ul>
+<script src="ajax.js"></script>
+<script>
+	window.onload = function() {
+		var oUl = document.getElementById('ul1');
+		var oLi = oUl.getElementsByTagName('li');
+		var liLength = oLi.length;		
+		waterfall(oLi);
+
+        function waterfall(oLi){
+        var iPage = 1;
+		var door = true;	
+		getList();
+		function getList() {
+			ajax('get','getPics.php','cpage='+ iPage,function(data) {
+			var data = JSON.parse(data);
+			var dataLen = data.length;
+			for(var i = 0; i < dataLen; i++) {
+				var _index = findShortLi();
+				var oDiv = document.createElement('div');
+				var oImg = document.createElement('img');
+				oImg.src = data[i].preview;
+				//以下两行代码：解决图片加载延迟问题，这时for循环不会等待图片加载完成后才开始寻找最短的li
+				oImg.style.width = '225px';
+				oImg.style.height = data[i].height*(225/data[i].width)+ 'px';//保持图片宽高比例不至于变形
+				oDiv.appendChild(oImg);
+				var oP = document.createElement('p');
+				oP.innerHTML = data[i].title;
+				oDiv.appendChild(oP);
+				oLi[_index].appendChild(oDiv);
+			}	
+			door = true;		
+		});
+		}
+
+		window.onscroll = function() {
+			var _index = findShortLi();
+			var aLi = oLi[_index];
+			//混杂模式和标准模式下scrollTop属性的获取
+			var scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+			if( getTop(aLi) + aLi.offsetHeight < document.documentElement.clientHeight + scrollTop ) {
+				if(door) {
+					door = false;
+					iPage++;
+					getList();
+				}
+			}
+		};
+
+		//寻找当前最短的li列表
+		function findShortLi() {
+			var index = 0;
+			var ih = oLi[index].offsetHeight;
+			for(var i=0; i<liLength; i++) {
+				if(oLi[i].offsetHeight <= ih) {
+					index = i;
+					ih = oLi[i].offsetHeight;
+				}
+			}
+				return index;
+		}
+            
+        //获取元素到顶端的高度
+	    function getTop(obj) {
+			var iTop = 0;
+			while(obj){
+				iTop += obj.offsetTop;
+				obj = obj.offsetParent;
+			}
+			return iTop;
+		}
+	}	
+
+};
+</script>
+</body>
+<foot>
+</foot>
+</html>
